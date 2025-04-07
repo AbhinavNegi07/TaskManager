@@ -140,7 +140,8 @@ class TaskController extends Controller
         }
 
         $task->update(['is_completed' => true]);
-        return redirect()->route('tasks.index')->with('success', 'Task marked as completed.');
+        return redirect()->back()->with('success', 'Task marked as completed.');
+        // return redirect()->route('tasks.index')->with('success', 'Task marked as completed.');
     }
 
     public function show(Task $task)

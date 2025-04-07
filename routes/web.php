@@ -25,6 +25,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('tasks/{task}/complete', [TaskController::class, 'complete'])->name('tasks.complete');
     Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
     Route::patch('/tasks/{task}/toggle', [TaskController::class, 'toggleStatus'])->name('tasks.toggle');
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 });
 
 require __DIR__ . '/auth.php';

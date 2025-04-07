@@ -10,7 +10,7 @@
     </x-slot>
 
     <div class="p-6 max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center">
+        <div class="flex justify-between items-center mb-20">
             <!-- pending and completed tabs -->
             <div class="mb-4 flex space-x-2">
                 {{-- All Tasks --}}
@@ -72,9 +72,11 @@
                         <!-- Due Date -->
                         <div>
                             <label for="due_date" class="block text-sm font-medium text-gray-700">Due Date</label>
-                            <input type="date" name="due_date" id="due_date" value="{{ request('due_date') }}"
+                            <input type="text" name="due_date" id="due_date" placeholder="select a date"
+                                value="{{ request('due_date') }}"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
                         </div>
+
 
                         <!-- Buttons -->
                         <div class="flex justify-between items-center pt-2">
@@ -92,6 +94,8 @@
 
 
         <!-- Task Cards Container -->
+
+        @if ($tasks->count())
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach ($tasks as $task)
             <div class="bg-white shadow-md rounded-lg p-6 border border-gray-200">
@@ -160,12 +164,50 @@
                         Edit
                     </a>
 
-                    <form action="{{ route('tasks.destroy', $task->id) }}" method="POST">
+
+                    <!-- Delete Tasks -->
+
+                    <div x-data="{ showConfirm: false }">
+                        <!-- Trigger Button -->
+                        <button @click="showConfirm = true" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
+                            Delete
+                        </button>
+
+                        <!-- Confirmation Modal -->
+                        <div x-show="showConfirm"
+                            x-transition
+                            class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+                            style="display: none;">
+                            <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+                                <h2 class="text-lg font-bold mb-4">Confirm Deletion</h2>
+                                <p class="text-gray-700 mb-6">Are you sure you want to delete this task? This action cannot be undone.</p>
+
+                                <div class="flex justify-end gap-4">
+                                    <button @click="showConfirm = false"
+                                        class="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded">
+                                        Cancel
+                                    </button>
+
+                                    <form action="{{ route('tasks.destroy', $task->id) }}" method="POST">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                            class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded">
+                                            Yes, Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- <form action="{{ route('tasks.destroy', $task->id) }}" method="POST">
                         @csrf @method('DELETE')
                         <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
                             Delete
                         </button>
-                    </form>
+                    </form> -->
 
                     <form action="{{ route('tasks.complete', $task->id) }}" method="POST">
                         @csrf @method('PATCH')
@@ -196,5 +238,29 @@
             </div>
             @endforeach
         </div>
+        @else
+        <div class="text-white text-5xl flex justify-center  items-center font-semibold">
+            No tasks found for this filter.
+        </div>
+        @endif
+
     </div>
+
+    @push('scripts')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        flatpickr("#due_date", {
+            altInput: true,
+            altFormat: "d-m-Y",
+            dateFormat: "Y-m-d", // matches MySQL format
+            defaultDate: "{{ request('due_date') }}",
+            enableTime: false // no time picker needed here
+            // No minDate so past dates are allowed
+        });
+    </script>
+    @endpush
+
+
+
 </x-app-layout>
