@@ -3,6 +3,10 @@
         <h2 class="font-semibold text-xl text-gray-800 leading-tight mr-5 inline">
             My Tasks
         </h2>
+        <a href="{{ route('dashboard') }}"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mr-5 shadow-md transition duration-300">
+            Dashboard
+        </a>
         <a href="{{ route('tasks.create') }}"
             class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow-md transition duration-300">
             Create New Task
@@ -10,33 +14,42 @@
     </x-slot>
 
     <div class="p-6 max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center mb-20">
+        <div class="flex justify-between items-center m-2">
+
             <!-- pending and completed tabs -->
             <div class="mb-4 flex space-x-2">
-                {{-- All Tasks --}}
+
+                <!-- All Tasks  -->
                 <a href="{{ route('tasks.index') }}"
                     class="px-4 py-2 rounded-lg 
        {{ is_null(request('completed')) ? 'font-bold bg-blue-600 text-white' : 'bg-white text-gray-500' }}">
                     All
                 </a>
 
-                {{-- Pending Tasks --}}
+                <!-- Pending Tasks -->
                 <a href="{{ route('tasks.index', ['completed' => 0]) }}"
                     class="px-4 py-2 rounded-lg 
        {{ request('completed') === '0' ? 'font-bold bg-blue-600 text-white' : 'bg-white text-gray-500' }}">
                     Pending
                 </a>
 
-                {{-- Completed Tasks --}}
+                <!-- Completed Tasks  -->
                 <a href="{{ route('tasks.index', ['completed' => 1]) }}"
                     class="px-4 py-2 rounded-lg 
        {{ request('completed') === '1' ? 'font-bold bg-blue-600 text-white' : 'bg-white text-gray-500' }}">
                     Completed
                 </a>
+
+                <!-- Overdue Tasks -->
+                <a href="{{ route('tasks.index', ['overdue' => 1]) }}"
+                    class="px-4 py-2 rounded-lg 
+{{ request('overdue') == '1' ? 'font-bold bg-blue-600 text-white' : 'bg-white text-gray-500' }}">
+                    Overdue
+                </a>
             </div>
 
             <!-- Filter Dropdown Button -->
-            <div class="relative inline-block text-left mb-4 mr-10">
+            <div class="relative inline-block text-left mb-4">
                 <button type="button" id="filterToggle"
                     class="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none"
                     onclick="document.getElementById('filterMenu').classList.toggle('hidden')">
@@ -50,7 +63,8 @@
 
                 <!-- Dropdown Menu -->
                 <div id="filterMenu"
-                    class="origin-top-left absolute left-0 mt-2 w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden z-50">
+                    class="origin-top-right absolute right-0 mt-2 w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden z-50">
+
                     <form method="GET" action="{{ route('tasks.index') }}" class="p-4 space-y-4">
                         <!-- Keep completed status if applied -->
                         @if(request()->has('completed'))
@@ -98,15 +112,30 @@
         @if ($tasks->count())
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach ($tasks as $task)
-            <div class="bg-white shadow-md rounded-lg p-6 border border-gray-200">
+            @php
+            $isOverdue = !$task->is_completed && \Carbon\Carbon::parse($task->due_date)->lt(now());
+            @endphp
+            <div class="bg-white shadow-md rounded-lg p-6 border border-gray-200  {{ $isOverdue ? 'bg-red-50 border-red-300' : 'bg-white border-gray-200' }}">
                 <!-- Task Image -->
-                @if ($task->image)
+                <!-- @if ($task->image)
                 <img src="{{ asset('storage/'.$task->image) }}" class="my-2 w-full h-50 object-cover rounded-lg shadow">
-                @endif
+                @endif -->
+                <div class="relative my-2 w-full h-48 rounded-lg overflow-hidden shadow">
+                    <!-- Lazy Loaded Image -->
+                    <img
+                        src="{{ asset('storage/' . $task->image) }}"
+                        alt="Task Image"
+                        loading="lazy"
+                        @load="loaded = true"
+                        class="w-full h-48 object-cover transition-opacity duration-500"
+                        :class="{ 'opacity-0': !loaded, 'opacity-100': loaded }" />
+                </div>
+
+                <!-- Task Title -->
                 <h2 class="text-xl font-bold text-gray-800 ">{{ $task->title }}</h2>
 
-
-                <p class="text-gray-600 mb-2">
+                <!-- Task Description -->
+                <p class="text-gray-600 text-justify mb-2">
                     {{ \Illuminate\Support\Str::words($task->description, 20, '...') }}
                 </p>
 
@@ -126,35 +155,36 @@
                     <!-- Status -->
                     <p class="text-sm font-bold text-gray-700">
                         Status:
+                        @if ($task->is_completed)
+                        <span class="px-2 py-1 rounded-full text-white bg-green-500">
+                            Completed
+                        </span>
+                        @elseif ($isOverdue)
+                        <span class="px-2 py-1 rounded-full bg-red-600 text-white text-xs font-semibold animate-pulse">
+                            🔴 Overdue
+                        </span>
+                        @else
+                        <span class="px-2 py-1 rounded-full text-white bg-gray-500">
+                            Pending
+                        </span>
+                        @endif
+                    </p>
+                    <!-- <p class="text-sm font-bold text-gray-700">
+                        Status:
                         <span class="px-2 py-1 rounded-full text-white
             {{ $task->is_completed ? 'bg-green-500' : 'bg-gray-500' }}">
                             {{ $task->is_completed ? 'Completed' : 'Pending' }}
                         </span>
-                    </p>
+                    </p> -->
                 </div>
 
 
-                <!-- Priority -->
-                <!-- <p class="text-sm font-semibold text-gray-700 mb-4">Priority:
-                    <span class="px-2 py-1 rounded-full text-white
-                {{ $task->priority == 'low' ? 'bg-green-500' : ($task->priority == 'medium' ? 'bg-yellow-500' : 'bg-red-500') }}">
-                        {{ ucfirst($task->priority) }}
-                    </span>
-                </p> -->
-
-                <!-- Status -->
-                <!-- <p class="text-sm text-gray-700 font-bold">Status:
-                    <span class="px-2 py-1 rounded-full text-white
-                {{ $task->is_completed ? 'bg-green-500' : 'bg-gray-500' }}">
-                        {{ $task->is_completed ? 'Completed' : 'Pending' }}
-                    </span>
-                </p> -->
+                <!-- Due Date -->
                 <div class="flex items-center justify-between gap-4 mb-4">
                     <p class="text-sm text-gray-700 my-2 font-bold">Due: {{ \Carbon\Carbon::parse($task->due_date)->format('M d, Y') }}</p>
 
                     <a href="{{ route('tasks.show', $task->id) }}" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">Details</a>
                 </div>
-
 
 
                 <!-- Buttons -->
@@ -164,9 +194,7 @@
                         Edit
                     </a>
 
-
                     <!-- Delete Tasks -->
-
                     <div x-data="{ showConfirm: false }">
                         <!-- Trigger Button -->
                         <button @click="showConfirm = true" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
@@ -201,14 +229,7 @@
                         </div>
                     </div>
 
-
-                    <!-- <form action="{{ route('tasks.destroy', $task->id) }}" method="POST">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
-                            Delete
-                        </button>
-                    </form> -->
-
+                    <!-- Complete task button -->
                     <form action="{{ route('tasks.complete', $task->id) }}" method="POST">
                         @csrf @method('PATCH')
                         <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">
@@ -238,8 +259,10 @@
             </div>
             @endforeach
         </div>
+
+
         @else
-        <div class="text-white text-5xl flex justify-center  items-center font-semibold">
+        <div class="text-white text-5xl flex justify-center  items-center font-semibold mt-20">
             No tasks found for this filter.
         </div>
         @endif
@@ -260,7 +283,4 @@
         });
     </script>
     @endpush
-
-
-
 </x-app-layout>

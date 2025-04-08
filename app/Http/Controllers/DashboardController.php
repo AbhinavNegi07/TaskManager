@@ -13,7 +13,6 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $tasks = $user->tasks()->where('is_completed', true)->get();
-        // dd($tasks);
 
         $stats = [
             'lifetime' => $tasks->count(),
@@ -28,16 +27,6 @@ class DashboardController extends Controller
             'high' => $tasks->where('priority', 'high')->count(),
         ];
 
-        // dd($priorityBreakdown);
-
-        // Monthly completion
-        // $monthlyStats = $tasks->groupBy(function ($task) {
-        //     return Carbon::parse($task->updated_at)->format('m'); // numeric month: "01", "02", etc.
-        // })->sortKeys()->mapWithKeys(function ($group, $monthNumber) {
-        //     $monthName = Carbon::create()->month((int)$monthNumber)->format('F');
-        //     return [$monthName => $group->count()];
-        // });
-
         // Step 1: Get all months in the last 12 months
         $months = collect(CarbonPeriod::create(now()->subMonths(11)->startOfMonth(), '1 month', now()))
             ->mapWithKeys(function ($date) {
@@ -51,9 +40,6 @@ class DashboardController extends Controller
 
         // Step 3: Merge to ensure all months are present
         $monthlyStats = $months->merge($completedMonthly);
-
-        // dd($monthlyStats);
-
 
         return view('dashboard.index', compact('stats', 'priorityBreakdown', 'monthlyStats'));
     }

@@ -9,19 +9,20 @@ use Illuminate\Support\Facades\Storage;
 
 class TaskController extends Controller
 {
-    // public function index()
-    // {
-    //     $tasks = Task::where('user_id', Auth::id())->latest()->get();
-    //     return view('tasks.index', compact('tasks'));
-    // }
-
-
     // public function index(Request $request)
     // {
-    //     $query = Task::where('user_id', auth::id());
+    //     $query = Task::query()->where('user_id', Auth::id());
 
-    //     if ($request->has('completed')) {
+    //     if ($request->filled('completed')) {
     //         $query->where('is_completed', $request->completed);
+    //     }
+
+    //     if ($request->filled('priority')) {
+    //         $query->where('priority', $request->priority);
+    //     }
+
+    //     if ($request->filled('due_date')) {
+    //         $query->whereDate('due_date', $request->due_date);
     //     }
 
     //     $tasks = $query->latest()->get();
@@ -30,9 +31,14 @@ class TaskController extends Controller
     // }
 
     public function index(Request $request)
-    {
-        $query = Task::query()->where('user_id', Auth::id());
+{
+    $query = Task::query()->where('user_id', Auth::id());
 
+    if ($request->filled('overdue') && $request->overdue == 1) {
+        // Show only tasks that are not completed and due date is past today
+        $query->where('is_completed', 0)
+              ->whereDate('due_date', '<', now()->toDateString());
+    } else {
         if ($request->filled('completed')) {
             $query->where('is_completed', $request->completed);
         }
@@ -44,12 +50,12 @@ class TaskController extends Controller
         if ($request->filled('due_date')) {
             $query->whereDate('due_date', $request->due_date);
         }
-
-        $tasks = $query->latest()->get();
-
-        return view('tasks.index', compact('tasks'));
     }
 
+    $tasks = $query->latest()->get();
+
+    return view('tasks.index', compact('tasks'));
+}
 
 
     public function create()
@@ -141,12 +147,10 @@ class TaskController extends Controller
 
         $task->update(['is_completed' => true]);
         return redirect()->back()->with('success', 'Task marked as completed.');
-        // return redirect()->route('tasks.index')->with('success', 'Task marked as completed.');
     }
 
     public function show(Task $task)
     {
-        // Ensure the user owns the task
         if ($task->user_id !== Auth::id()) {
             abort(403);
         }
@@ -156,7 +160,6 @@ class TaskController extends Controller
 
     public function toggleStatus(Task $task)
     {
-        // Optional: Check if the task belongs to the user
         if ($task->user_id !== Auth::id()) {
             abort(403);
         }
