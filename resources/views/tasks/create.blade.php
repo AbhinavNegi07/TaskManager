@@ -41,7 +41,7 @@
                     class="w-full border rounded p-2" required>
             </div> -->
             <div>
-                <label class="block text-sm font-medium text-gray-700">Due Date</label>
+                
                 <div class="relative">
                     <label class="block text-sm font-medium text-gray-700">Due Date</label>
                     <input

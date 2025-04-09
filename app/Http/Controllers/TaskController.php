@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Task;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class TaskController extends Controller
 {
@@ -31,31 +32,51 @@ class TaskController extends Controller
     // }
 
     public function index(Request $request)
-{
-    $query = Task::query()->where('user_id', Auth::id());
+    {
+        $userId = Auth::id();
+    
+        // Get selected date or default to today
+        $selectedDate = $request->input('date', today()->toDateString());
+    
+        $query = Task::query()->where('user_id', $userId);
+    
+        // If overdue filter is set, override all others
+        if ($request->filled('overdue') && $request->overdue == 1) {
+            $query->where('is_completed', 0)
+                  ->whereDate('due_date', '<', today());
+                 
 
-    if ($request->filled('overdue') && $request->overdue == 1) {
-        // Show only tasks that are not completed and due date is past today
-        $query->where('is_completed', 0)
-              ->whereDate('due_date', '<', now()->toDateString());
-    } else {
-        if ($request->filled('completed')) {
-            $query->where('is_completed', $request->completed);
+        } else {
+            // Filter for a specific date (today by default)
+            $query->whereDate('due_date', $selectedDate);
+    
+            if ($request->filled('completed')) {
+                $query->where('is_completed', $request->completed);
+            }
+    
+            if ($request->filled('priority')) {
+                $query->where('priority', $request->priority);
+            }
         }
 
-        if ($request->filled('priority')) {
-            $query->where('priority', $request->priority);
-        }
-
-        if ($request->filled('due_date')) {
-            $query->whereDate('due_date', $request->due_date);
-        }
+        // dd($query->pluck('due_date'));
+    
+        $tasks = $query->latest()->get();
+    
+        // ✅ Date-based counts for the selected date
+        $allCount = Task::where('user_id', $userId)->whereDate('due_date', $selectedDate)->count();
+        $pendingCount = Task::where('user_id', $userId)->whereDate('due_date', $selectedDate)->where('is_completed', 0)->count();
+        $completedCount = Task::where('user_id', $userId)->whereDate('due_date', $selectedDate)->where('is_completed', 1)->count();
+    
+        // ✅ Overdue is independent (based on today's date)
+        $overdueCount = Task::where('user_id', $userId)
+                            ->where('is_completed', 0)
+                            ->whereDate('due_date', '<', today())
+                            ->count();
+    
+        return view('tasks.index', compact('tasks', 'allCount', 'pendingCount', 'completedCount', 'overdueCount', 'selectedDate'));
     }
-
-    $tasks = $query->latest()->get();
-
-    return view('tasks.index', compact('tasks'));
-}
+    
 
 
     public function create()
@@ -80,7 +101,9 @@ class TaskController extends Controller
             'description' => $request->description,
             'image' => $imagePath,
             'priority' => $request->priority,
-            'due_date' => $request->due_date,
+            // 'due_date' => $request->due_date,
+            'due_date' => \Carbon\Carbon::parse($request->due_date)->toDateString(), // stores as 'YYYY-MM-DD'
+
         ]);
 
         return redirect()->route('tasks.index')->with('success', 'Task created successfully.');

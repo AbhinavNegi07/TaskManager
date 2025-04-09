@@ -16,9 +16,9 @@ class DashboardController extends Controller
 
         $stats = [
             'lifetime' => $tasks->count(),
-            'year' => $tasks->where('updated_at', '>=', now()->startOfYear())->count(),
-            'month' => $tasks->where('updated_at', '>=', now()->startOfMonth())->count(),
-            'week' => $tasks->where('updated_at', '>=', now()->startOfWeek())->count(),
+            'Current Year' => $tasks->where('updated_at', '>=', now()->startOfYear())->count(),
+            'Current Month' => $tasks->where('updated_at', '>=', now()->startOfMonth())->count(),
+            'Current Week' => $tasks->where('updated_at', '>=', now()->startOfWeek())->count(),
         ];
 
         $priorityBreakdown = [

@@ -13,7 +13,7 @@
                 <a href="{{ route('tasks.index', ['completed' => 1]) }}"
                    class="bg-white border border-gray-200 p-6 rounded-xl shadow hover:shadow-lg transition duration-200">
                     <h3 class="text-gray-600 text-sm font-medium uppercase tracking-wide mb-2">
-                        {{ ucfirst($key) }} Completed
+                        {{ ucfirst($key) }}
                     </h3>
                     <p class="text-4xl font-bold text-blue-600">{{ $value }}</p>
                 </a>
@@ -21,7 +21,6 @@
         </div>
 
 
-       
         <!-- Charts Section -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
             <!-- Priority Chart -->
@@ -41,7 +40,6 @@
             </div>
         </div>
         </div>
-
     </div>
 
     @push('scripts')
